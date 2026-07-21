@@ -1,0 +1,289 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model budget {
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  allocated Float
+  spent     Float
+  createdAt DateTime @default(now())
+  event     event    @relation(fields: [eventId], references: [id], map: "Budget_eventId_fkey")
+
+  @@index([eventId], map: "Budget_eventId_fkey")
+}
+
+model event {
+  id               Int                @id @default(autoincrement())
+  title            String
+  type             String?
+  description      String
+  startDate        DateTime
+  endDate          DateTime
+  institutionId    Int
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime
+  status           event_status       @default(COMPLETED)
+  venueId          Int?
+  maxParticipants  Int                @default(100)
+  budget           budget[]
+  institution      institution        @relation(fields: [institutionId], references: [id], map: "Event_institutionId_fkey")
+  venue            venue?             @relation(fields: [venueId], references: [id], map: "Event_venueId_fkey")
+  eventcoordinator eventcoordinator[]
+  eventproposal    eventproposal[]
+  eventtimeline    eventtimeline[]
+  feedback         feedback[]
+  media            media[]
+  registration     registration[]
+  segment          segment[]
+  sponsor          sponsor[]
+  winner           winner[]
+  volunteer        volunteer[]
+
+  @@index([institutionId], map: "Event_institutionId_fkey")
+  @@index([venueId], map: "Event_venueId_fkey")
+}
+
+model eventcoordinator {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  eventId   Int
+  createdAt DateTime @default(now())
+  event     event    @relation(fields: [eventId], references: [id], map: "EventCoordinator_eventId_fkey")
+  user      user     @relation(fields: [userId], references: [id], map: "EventCoordinator_userId_fkey")
+
+  @@unique([userId, eventId], map: "EventCoordinator_userId_eventId_key")
+  @@index([eventId], map: "EventCoordinator_eventId_fkey")
+}
+
+model eventproposal {
+  id          Int      @id @default(autoincrement())
+  eventId     Int
+  organizerId Int
+  status      String   @default("PENDING")
+  comments    String?
+  createdAt   DateTime @default(now())
+  event       event    @relation(fields: [eventId], references: [id], map: "EventProposal_eventId_fkey")
+  user        user     @relation(fields: [organizerId], references: [id], map: "EventProposal_organizerId_fkey")
+
+  @@index([eventId], map: "EventProposal_eventId_fkey")
+  @@index([organizerId], map: "EventProposal_organizerId_fkey")
+}
+
+model eventtimeline {
+  id          Int      @id @default(autoincrement())
+  eventId     Int
+  time        DateTime
+  description String
+  createdAt   DateTime @default(now())
+  event       event    @relation(fields: [eventId], references: [id], map: "EventTimeline_eventId_fkey")
+
+  @@index([eventId], map: "EventTimeline_eventId_fkey")
+}
+
+model feedback {
+  id               Int      @id @default(autoincrement())
+  userId           Int
+  eventId          Int
+  rating           Int      // Overall rating
+  qualityRating    Int      @default(5)
+  venueRating      Int      @default(5)
+  orgRating        Int      @default(5)
+  timingRating     Int      @default(5)
+  review           String?  @db.Text
+  suggestions      String?  @db.Text
+  createdAt        DateTime @default(now())
+  event            event    @relation(fields: [eventId], references: [id], map: "Feedback_eventId_fkey")
+  user             user     @relation(fields: [userId], references: [id], map: "Feedback_userId_fkey")
+
+  @@unique([userId, eventId], map: "Feedback_userId_eventId_key")
+  @@index([eventId], map: "Feedback_eventId_fkey")
+}
+
+model institution {
+  id                                                                  Int                   @id @default(autoincrement())
+  name                                                                String                @unique(map: "Institution_name_key")
+  code                                                                String                @unique(map: "Institution_code_key")
+  location                                                            String?
+  createdAt                                                           DateTime              @default(now())
+  updatedAt                                                           DateTime
+  event                                                               event[]
+  relationshiptracker_relationshiptracker_institutionAIdToinstitution relationshiptracker[] @relation("relationshiptracker_institutionAIdToinstitution")
+  relationshiptracker_relationshiptracker_institutionBIdToinstitution relationshiptracker[] @relation("relationshiptracker_institutionBIdToinstitution")
+  user                                                                user[]
+}
+
+model media {
+  id        Int      @id @default(autoincrement())
+  url       String
+  type      String
+  eventId   Int
+  createdAt DateTime @default(now())
+  event     event    @relation(fields: [eventId], references: [id], map: "Media_eventId_fkey")
+
+  @@index([eventId], map: "Media_eventId_fkey")
+}
+
+model notification {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  title      String
+  message    String
+  type       String   @default("INFO")
+  read       Boolean  @default(false)
+  actionPath String?
+  createdAt  DateTime @default(now())
+  user       user     @relation(fields: [userId], references: [id], map: "Notification_userId_fkey")
+
+  @@index([userId], map: "Notification_userId_fkey")
+}
+
+model registration {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  segmentId Int?
+  eventId   Int
+  status    String   @default("APPROVED")
+  createdAt DateTime @default(now())
+  event     event    @relation(fields: [eventId], references: [id], map: "Registration_eventId_fkey")
+  segment   segment? @relation(fields: [segmentId], references: [id], map: "Registration_segmentId_fkey")
+  user      user     @relation(fields: [userId], references: [id], map: "Registration_userId_fkey")
+
+  @@unique([userId, eventId, segmentId], map: "Registration_userId_eventId_segmentId_key")
+  @@index([eventId], map: "Registration_eventId_fkey")
+  @@index([segmentId], map: "Registration_segmentId_fkey")
+}
+
+model relationshiptracker {
+  id                                                          Int         @id @default(autoincrement())
+  institutionAId                                              Int
+  institutionBId                                              Int
+  interactionScore                                            Float       @default(0)
+  lastInteraction                                             DateTime    @default(now())
+  institution_relationshiptracker_institutionAIdToinstitution institution @relation("relationshiptracker_institutionAIdToinstitution", fields: [institutionAId], references: [id], map: "RelationshipTracker_institutionAId_fkey")
+  institution_relationshiptracker_institutionBIdToinstitution institution @relation("relationshiptracker_institutionBIdToinstitution", fields: [institutionBId], references: [id], map: "RelationshipTracker_institutionBId_fkey")
+
+  @@unique([institutionAId, institutionBId], map: "RelationshipTracker_institutionAId_institutionBId_key")
+  @@index([institutionBId], map: "RelationshipTracker_institutionBId_fkey")
+}
+
+model segment {
+  id           Int            @id @default(autoincrement())
+  name         String
+  eventId      Int
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime
+  registration registration[]
+  event        event          @relation(fields: [eventId], references: [id], map: "Segment_eventId_fkey")
+  winner       winner[]
+
+  @@index([eventId], map: "Segment_eventId_fkey")
+}
+
+model sponsor {
+  id           Int      @id @default(autoincrement())
+  name         String
+  contribution Float
+  logo         String?
+  eventId      Int
+  createdAt    DateTime @default(now())
+  event        event    @relation(fields: [eventId], references: [id], map: "Sponsor_eventId_fkey")
+
+  @@index([eventId], map: "Sponsor_eventId_fkey")
+}
+
+model user {
+  id               Int                @id @default(autoincrement())
+  name             String
+  email            String             @unique(map: "User_email_key")
+  password         String
+  role             user_role          @default(PARTICIPANT)
+  institutionId    Int
+  phone            String?
+  about            String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime
+  eventcoordinator eventcoordinator[]
+  eventproposal    eventproposal[]
+  feedback         feedback[]
+  notification     notification[]
+  registration     registration[]
+  institution      institution        @relation(fields: [institutionId], references: [id], map: "User_institutionId_fkey")
+  winner           winner[]
+  volunteer        volunteer[]
+
+  @@index([institutionId], map: "User_institutionId_fkey")
+}
+
+model venue {
+  id        Int      @id @default(autoincrement())
+  name      String
+  capacity  Int?
+  location  String?
+  createdAt DateTime @default(now())
+  event     event[]
+}
+
+model winner {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  eventId   Int
+  segmentId Int
+  position  Int
+  createdAt DateTime @default(now())
+  event     event    @relation(fields: [eventId], references: [id], map: "Winner_eventId_fkey")
+  segment   segment  @relation(fields: [segmentId], references: [id], map: "Winner_segmentId_fkey")
+  user      user     @relation(fields: [userId], references: [id], map: "Winner_userId_fkey")
+
+  @@unique([segmentId, position], map: "Winner_segmentId_position_key")
+  @@index([eventId], map: "Winner_eventId_fkey")
+  @@index([userId], map: "Winner_userId_fkey")
+}
+
+enum user_role {
+  ADMIN
+  ORGANIZER
+  PARTICIPANT
+}
+
+enum event_status {
+  PROPOSED
+  APPROVED
+  ACTIVE
+  UPCOMING
+  ONGOING
+  REGISTRATION_OPEN
+  COMPLETED
+  CANCELLED
+}
+
+model volunteer {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  eventId        Int
+  responsibility String
+  status         String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           user     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Volunteer_userId_fkey")
+  event          event    @relation(fields: [eventId], references: [id], onDelete: Cascade, map: "Volunteer_eventId_fkey")
+
+  @@unique([userId, eventId])
+  @@index([eventId], map: "Volunteer_eventId_fkey")
+  @@index([userId], map: "Volunteer_userId_fkey")
+}
+
+model emaillog {
+  id           Int      @id @default(autoincrement())
+  timestamp    DateTime @default(now())
+  recipient    String
+  emailType    String
+  status       String
+  errorMessage String?  @db.Text
+}
+
