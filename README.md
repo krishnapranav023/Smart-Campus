@@ -1,3 +1,13 @@
+# 🎓 Smart-Campus
+
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![Material_UI](https://img.shields.io/badge/Material--UI-007FFF?style=for-the-badge&logo=mui&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+
 <p align="center">
   <img src="assets/banner.png" alt="Smart-Campus Banner" width="100%">
 </p>
@@ -82,6 +92,21 @@ Built with a scalable architecture using **React, Node.js, Express, Prisma ORM, 
 - Secure Password Hashing
 - MySQL Database
 
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+graph TD
+    A[React + Vite Frontend]
+    B[Express.js REST API]
+    C[Prisma ORM]
+    D[(MySQL Database)]
+
+    A --> B
+    B --> C
+    C --> D
+```
 ---
 
 # 📸 Application Screenshots
